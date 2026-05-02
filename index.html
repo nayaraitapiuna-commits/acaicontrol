@@ -434,42 +434,53 @@ function dataFmtBr(s){return `${s.slice(6,8)}/${s.slice(4,6)}/${s.slice(0,4)}`}
 
 async function verificarLicenca(){
   const params = new URLSearchParams(window.location.search);
-  const chave = params.get('key') || localStorage.getItem('acai_key');
+  const chaveUrl = params.get('key');
+  const chaveSalva = localStorage.getItem('acai_key');
+  const chave = chaveUrl || chaveSalva;
 
-  // sem chave nenhuma na url E sem chave salva
+  // sem chave nenhuma
   if(!chave){
     bloquear('🔒','Acesso restrito','Este app requer uma licença válida. Entre em contato para adquirir o seu.');
     return;
   }
 
   try{
-    const partes = chave.split('-');
-    const exp = partes[0];
-    const token = partes[1];
-    if(!exp || !token || exp.length !== 8){ bloquear('🔒','Licença inválida','Esta chave de acesso não é reconhecida.'); return; }
+    // a chave tem formato YYYYMMDD-TOKEN (token pode conter hífens)
+    const primeiroHifen = chave.indexOf('-');
+    if(primeiroHifen === -1){ bloquear('🔒','Licença inválida','Chave com formato inválido.'); return; }
 
-    // verifica data
+    const exp   = chave.slice(0, primeiroHifen);   // ex: 20530916
+    const token = chave.slice(primeiroHifen + 1);  // ex: QZG9GFYE4B4Z5-G5
+
+    if(!exp || !token || exp.length !== 8){
+      bloquear('🔒','Licença inválida','Esta chave de acesso não é reconhecida.');
+      return;
+    }
+
+    // verifica data de expiração
     const ano=parseInt(exp.slice(0,4)), mes=parseInt(exp.slice(4,6))-1, dia=parseInt(exp.slice(6,8));
-    const dataExp = new Date(ano,mes,dia,23,59,59);
-    if(isNaN(dataExp.getTime())){ bloquear('🔒','Licença inválida','Chave com formato inválido.'); return; }
+    const dataExp = new Date(ano, mes, dia, 23, 59, 59);
+    if(isNaN(dataExp.getTime())){
+      bloquear('🔒','Licença inválida','Chave com formato inválido.');
+      return;
+    }
     if(new Date() > dataExp){
       bloquear('⏰','Licença expirada',`Sua licença venceu em ${dataFmtBr(exp)}. Renove para continuar usando o AçaíControl.`);
       return;
     }
 
-    // salva chave no localStorage para não precisar da URL sempre
+    // ✅ licença válida — salva no localStorage para abrir sem URL
     localStorage.setItem('acai_key', chave);
 
     // aviso de vencimento próximo (30 dias)
     const diasRestantes = Math.ceil((dataExp - new Date()) / (1000*60*60*24));
     if(diasRestantes <= 30){
-      setTimeout(()=>{
-        toast(`⚠️ Licença vence em ${diasRestantes} dias`);
-      }, 3000);
+      setTimeout(()=>{ toast(`⚠️ Licença vence em ${diasRestantes} dias`); }, 3000);
     }
 
-    // tudo ok — esconde bloqueio e mostra app
+    // esconde bloqueio e mostra app
     document.getElementById('tela-bloqueio').style.display = 'none';
+
   }catch(e){
     bloquear('🔒','Erro na verificação','Não foi possível validar a licença. Entre em contato pelo WhatsApp.');
   }
