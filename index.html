@@ -339,8 +339,80 @@ html,body{height:100%;background:var(--fundo);font-family:var(--font);color:var(
     <div class="nav-item" onclick="ir('compras',this)"><div class="nav-icon">🛒</div><div class="nav-label">Compras</div></div>
     <div class="nav-item" onclick="ir('fixos',this)"><div class="nav-icon">📌</div><div class="nav-label">Fixos</div></div>
     <div class="nav-item" onclick="ir('dados',this)"><div class="nav-icon">💾</div><div class="nav-label">Dados</div></div>
+    <div class="nav-item" id="nav-admin" style="display:none" onclick="ir('admin',this)"><div class="nav-icon">🔑</div><div class="nav-label">Admin</div></div>
   </div>
 </div>
+
+<!-- TELA ADMIN -->
+<div class="content" id="scr-admin" style="display:none">
+  <!-- LOGIN ADMIN -->
+  <div id="admin-login">
+    <div class="card" style="background:linear-gradient(135deg,#1a0a35,#2d0a5c);border:none">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:40px;margin-bottom:8px">🔑</div>
+        <div style="font-size:16px;font-weight:800;color:#fff">Área Admin</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:4px">Acesso restrito ao proprietário</div>
+      </div>
+      <div class="fg" style="margin-bottom:14px">
+        <label class="fl" style="color:rgba(255,255,255,.7)">Senha admin</label>
+        <input class="fi" type="password" id="admin-senha" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginAdmin()">
+      </div>
+      <button class="btn" onclick="loginAdmin()">Entrar</button>
+    </div>
+  </div>
+
+  <!-- PAINEL ADMIN (só aparece após login) -->
+  <div id="admin-painel" style="display:none">
+    <div class="card" style="background:linear-gradient(135deg,#1a0a35,#2d0a5c);border:none;margin-bottom:0">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#fff">🔑 Admin AçaíControl</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">Gerador de licenças</div>
+        </div>
+        <button onclick="logoutAdmin()" style="background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Sair</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Nova licença</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="fg">
+          <label class="fl">Nome do cliente</label>
+          <input class="fi" type="text" id="adm-nome" placeholder="Ex: Ana Carla – Açaíteria">
+        </div>
+        <div class="fg">
+          <label class="fl">Validade</label>
+          <select class="fi" id="adm-plano">
+            <option value="365">Básico – 1 ano</option>
+            <option value="730">Completo – 2 anos</option>
+            <option value="9999">Empresarial – Vitalício</option>
+            <option value="30">Teste – 30 dias</option>
+          </select>
+        </div>
+        <button class="btn" onclick="admGerarLicenca()">🔑 Gerar licença</button>
+      </div>
+    </div>
+
+    <div class="card" id="adm-resultado" style="display:none">
+      <div class="card-title">✅ Licença gerada</div>
+      <div style="background:var(--cinza1);border-radius:10px;padding:12px;margin-bottom:12px">
+        <div style="font-size:10px;color:var(--texto3);font-weight:700;letter-spacing:.5px;margin-bottom:6px">LINK DO CLIENTE</div>
+        <div style="font-size:12px;color:var(--roxo2);font-weight:700;word-break:break-all;font-family:monospace" id="adm-link"></div>
+      </div>
+      <div style="font-size:13px;color:var(--texto2);margin-bottom:14px" id="adm-info"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="btn btn-ghost" onclick="admCopiar()">📋 Copiar</button>
+        <button class="btn" style="background:linear-gradient(135deg,#25D366,#1a9955);box-shadow:0 4px 14px rgba(37,211,102,.3)" onclick="admEnviarWpp()">💬 WhatsApp</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Licenças geradas</div>
+      <div id="adm-historico"><div class="empty">Nenhuma licença ainda</div></div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -444,17 +516,6 @@ function getRec(){const{receitas}=loadAll();return receitas.filter(r=>{const[y,m
 function getComp(){const{compras}=loadAll();return compras.filter(c=>{const[y,m]=c.data.split('-').map(Number);return y===vy&&m-1===vm})}
 function getFixos(){return loadAll().fixos}
 
-function ir(nome,el){
-  document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('scr-'+nome).classList.add('active');
-  el.classList.add('active');
-  if(nome==='resumo')renderResumo();
-  if(nome==='compras'){renderCompras();if(!document.getElementById('ins-ed').children.length)addIns()}
-  if(nome==='receita')renderReceitas();
-  if(nome==='fixos')renderFixos();
-  if(nome==='dados')renderDados();
-}
 function mudaMes(d){vm+=d;if(vm>11){vm=0;vy++}if(vm<0){vm=11;vy--}atuHdr();renderResumo()}
 
 function calcPrev(){
@@ -792,6 +853,133 @@ function renderDados(){
     <div class="stat-box"><div class="stat-num">${rec.length}</div><div class="stat-lbl">Receitas</div></div>
     <div class="stat-box"><div class="stat-num">${comp.length}</div><div class="stat-lbl">Compras</div></div>
     <div class="stat-box"><div class="stat-num">${meses}</div><div class="stat-lbl">Meses</div></div>`;
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+const ADMIN_SENHA = "acai@admin2025"; // ← MUDE ESTA SENHA!
+const APP_URL = "https://nayaraitapiuna-commits.github.io/acaicontrol";
+let admLinkGerado = '';
+
+// Ativa aba admin com 5 toques rápidos no header
+let tapCount = 0, tapTimer = null;
+document.querySelector('.header').addEventListener('click', ()=>{
+  tapCount++;
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(()=>tapCount=0, 2000);
+  if(tapCount >= 5){
+    tapCount = 0;
+    document.getElementById('nav-admin').style.display = 'flex';
+    document.getElementById('scr-admin').style.display = '';
+    const navAdmin = document.getElementById('nav-admin');
+    ir('admin', navAdmin);
+    toast('🔑 Modo admin ativado');
+  }
+});
+
+function ir(nome, el){
+  document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  // mostra a tela correta
+  const scr = document.getElementById('scr-'+nome);
+  if(scr){ scr.classList.add('active'); scr.style.display='flex'; }
+  if(el) el.classList.add('active');
+  if(nome==='resumo')renderResumo();
+  if(nome==='compras'){renderCompras();if(!document.getElementById('ins-ed').children.length)addIns()}
+  if(nome==='receita')renderReceitas();
+  if(nome==='fixos')renderFixos();
+  if(nome==='dados')renderDados();
+  if(nome==='admin')renderAdminHistorico();
+}
+
+function loginAdmin(){
+  const s = document.getElementById('admin-senha').value;
+  if(s === ADMIN_SENHA){
+    document.getElementById('admin-login').style.display = 'none';
+    document.getElementById('admin-painel').style.display = 'block';
+    renderAdminHistorico();
+  } else {
+    toast('⚠️ Senha incorreta');
+    document.getElementById('admin-senha').value = '';
+  }
+}
+
+function logoutAdmin(){
+  document.getElementById('admin-login').style.display = 'block';
+  document.getElementById('admin-painel').style.display = 'none';
+  document.getElementById('admin-senha').value = '';
+  document.getElementById('adm-resultado').style.display = 'none';
+  document.getElementById('nav-admin').style.display = 'none';
+  // volta para resumo
+  ir('resumo', document.querySelector('.nav-item'));
+}
+
+async function admGerarLicenca(){
+  const nome = document.getElementById('adm-nome').value.trim();
+  const dias = parseInt(document.getElementById('adm-plano').value);
+  if(!nome){ toast('⚠️ Informe o nome do cliente'); return; }
+
+  const expira = new Date(Date.now() + dias*24*60*60*1000);
+  const exp = `${expira.getFullYear()}${String(expira.getMonth()+1).padStart(2,'0')}${String(expira.getDate()).padStart(2,'0')}`;
+  const payload = `${exp}:${nome}`;
+  const hash = await sha256app(`${SECRET_APP}:${payload}`);
+  const token = hash.slice(0,16).toUpperCase();
+  const chave = `${exp}-${token}`;
+  const link = `${APP_URL}?key=${chave}`;
+  admLinkGerado = link;
+
+  const expFmt = `${exp.slice(6,8)}/${exp.slice(4,6)}/${exp.slice(0,4)}`;
+  document.getElementById('adm-link').textContent = link;
+  document.getElementById('adm-info').innerHTML = `👤 <strong>${nome}</strong><br>📅 Válido até: <strong>${expFmt}</strong>`;
+  document.getElementById('adm-resultado').style.display = 'block';
+
+  // salva histórico
+  const hist = JSON.parse(localStorage.getItem('adm_licencas')||'[]');
+  hist.unshift({nome, chave, link, expira: expFmt, criada: new Date().toLocaleDateString('pt-BR')});
+  localStorage.setItem('adm_licencas', JSON.stringify(hist.slice(0,100)));
+  renderAdminHistorico();
+  document.getElementById('adm-nome').value = '';
+  toast('✓ Licença gerada!');
+}
+
+function admCopiar(){
+  navigator.clipboard.writeText(admLinkGerado).then(()=>{
+    toast('✓ Link copiado!');
+  }).catch(()=>{
+    // fallback para celulares mais antigos
+    const ta = document.createElement('textarea');
+    ta.value = admLinkGerado;
+    document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('✓ Link copiado!');
+  });
+}
+
+function admEnviarWpp(){
+  const nome = document.getElementById('adm-info').querySelector('strong').textContent;
+  const expira = document.getElementById('adm-info').querySelectorAll('strong')[1].textContent;
+  const msg = `🍇 *AçaíControl – Seu app está pronto!*\n\nOlá, ${nome}! Segue seu link exclusivo:\n\n${admLinkGerado}\n\n📅 Válido até: ${expira}\n\n⚠️ Este link é exclusivo para você.\n\nQualquer dúvida é só chamar! 😊`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function renderAdminHistorico(){
+  const hist = JSON.parse(localStorage.getItem('adm_licencas')||'[]');
+  const el = document.getElementById('adm-historico');
+  if(!hist.length){ el.innerHTML='<div class="empty">Nenhuma licença gerada ainda</div>'; return; }
+  el.innerHTML = hist.map(h=>{
+    const exp = h.chave.split('-')[0];
+    const ano=parseInt(exp.slice(0,4)), mes=parseInt(exp.slice(4,6))-1, dia=parseInt(exp.slice(6,8));
+    const valida = new Date() <= new Date(ano,mes,dia,23,59,59);
+    return `<div style="background:var(--cinza1);border:1px solid var(--borda);border-radius:10px;padding:12px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--roxo)">👤 ${h.nome}</div>
+          <div style="font-size:10px;color:var(--texto3);margin-top:2px">📅 Expira: ${h.expira} · Gerada: ${h.criada}</div>
+        </div>
+        <span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:${valida?'#dcfce7':'#fee2e2'};color:${valida?'#166534':'#991b1b'}">${valida?'✅ Ativa':'❌ Vencida'}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── SERVICE WORKER ────────────────────────────────────────────────────────────
