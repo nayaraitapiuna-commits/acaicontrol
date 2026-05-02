@@ -340,6 +340,73 @@ html,body{height:100%;background:var(--fundo);font-family:var(--font);color:var(
     </div>
   </div>
 
+  <!-- TELA ADMIN (dentro do app) -->
+  <div class="content" id="scr-admin">
+    <!-- LOGIN ADMIN -->
+    <div id="admin-login">
+      <div class="card" style="background:linear-gradient(135deg,#1a0a35,#2d0a5c);border:none">
+        <div style="text-align:center;margin-bottom:20px">
+          <div style="font-size:40px;margin-bottom:8px">🔑</div>
+          <div style="font-size:16px;font-weight:800;color:#fff">Área Admin</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:4px">Acesso restrito ao proprietário</div>
+        </div>
+        <div class="fg" style="margin-bottom:14px">
+          <label class="fl" style="color:rgba(255,255,255,.7)">Senha admin</label>
+          <input class="fi" type="password" id="admin-senha" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginAdmin()">
+        </div>
+        <button class="btn" onclick="loginAdmin()">Entrar</button>
+      </div>
+    </div>
+
+    <!-- PAINEL ADMIN -->
+    <div id="admin-painel" style="display:none">
+      <div class="card" style="background:linear-gradient(135deg,#1a0a35,#2d0a5c);border:none">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:15px;font-weight:800;color:#fff">🔑 Admin AçaíControl</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">Gerador de licenças</div>
+          </div>
+          <button onclick="logoutAdmin()" style="background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:var(--font)">Sair</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Nova licença</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="fg">
+            <label class="fl">Nome do cliente</label>
+            <input class="fi" type="text" id="adm-nome" placeholder="Ex: Ana Carla – Açaíteria">
+          </div>
+          <div class="fg">
+            <label class="fl">Validade</label>
+            <select class="fi" id="adm-plano">
+              <option value="365">Básico – 1 ano</option>
+              <option value="730">Completo – 2 anos</option>
+              <option value="9999">Empresarial – Vitalício</option>
+              <option value="30">Teste – 30 dias</option>
+            </select>
+          </div>
+          <button class="btn" onclick="admGerarLicenca()">🔑 Gerar licença</button>
+        </div>
+      </div>
+      <div class="card" id="adm-resultado" style="display:none">
+        <div class="card-title">✅ Licença gerada</div>
+        <div style="background:var(--cinza1);border-radius:10px;padding:12px;margin-bottom:12px">
+          <div style="font-size:10px;color:var(--texto3);font-weight:700;letter-spacing:.5px;margin-bottom:6px">LINK DO CLIENTE</div>
+          <div style="font-size:12px;color:var(--roxo2);font-weight:700;word-break:break-all;font-family:monospace" id="adm-link"></div>
+        </div>
+        <div style="font-size:13px;color:var(--texto2);margin-bottom:14px" id="adm-info"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <button class="btn btn-ghost" onclick="admCopiar()">📋 Copiar</button>
+          <button class="btn" style="background:linear-gradient(135deg,#25D366,#1a9955);box-shadow:0 4px 14px rgba(37,211,102,.3)" onclick="admEnviarWpp()">💬 WhatsApp</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Licenças geradas</div>
+        <div id="adm-historico"><div class="empty">Nenhuma licença ainda</div></div>
+      </div>
+    </div>
+  </div>
+
   <div class="nav" style="grid-template-columns:repeat(5,1fr)">
     <div class="nav-item active" onclick="ir('resumo',this)"><div class="nav-icon">📊</div><div class="nav-label">Resumo</div></div>
     <div class="nav-item" onclick="ir('receita',this)"><div class="nav-icon">💵</div><div class="nav-label">Receita</div></div>
@@ -347,76 +414,6 @@ html,body{height:100%;background:var(--fundo);font-family:var(--font);color:var(
     <div class="nav-item" onclick="ir('fixos',this)"><div class="nav-icon">📌</div><div class="nav-label">Fixos</div></div>
     <div class="nav-item" onclick="ir('dados',this)"><div class="nav-icon">💾</div><div class="nav-label">Dados</div></div>
     <div class="nav-item" id="nav-admin" style="display:none" onclick="ir('admin',this)"><div class="nav-icon">🔑</div><div class="nav-label">Admin</div></div>
-  </div>
-</div>
-
-<!-- TELA ADMIN -->
-<div class="content" id="scr-admin" style="display:none">
-  <!-- LOGIN ADMIN -->
-  <div id="admin-login">
-    <div class="card" style="background:linear-gradient(135deg,#1a0a35,#2d0a5c);border:none">
-      <div style="text-align:center;margin-bottom:20px">
-        <div style="font-size:40px;margin-bottom:8px">🔑</div>
-        <div style="font-size:16px;font-weight:800;color:#fff">Área Admin</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:4px">Acesso restrito ao proprietário</div>
-      </div>
-      <div class="fg" style="margin-bottom:14px">
-        <label class="fl" style="color:rgba(255,255,255,.7)">Senha admin</label>
-        <input class="fi" type="password" id="admin-senha" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginAdmin()">
-      </div>
-      <button class="btn" onclick="loginAdmin()">Entrar</button>
-    </div>
-  </div>
-
-  <!-- PAINEL ADMIN (só aparece após login) -->
-  <div id="admin-painel" style="display:none">
-    <div class="card" style="background:linear-gradient(135deg,#1a0a35,#2d0a5c);border:none;margin-bottom:0">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="font-size:15px;font-weight:800;color:#fff">🔑 Admin AçaíControl</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">Gerador de licenças</div>
-        </div>
-        <button onclick="logoutAdmin()" style="background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer">Sair</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Nova licença</div>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <div class="fg">
-          <label class="fl">Nome do cliente</label>
-          <input class="fi" type="text" id="adm-nome" placeholder="Ex: Ana Carla – Açaíteria">
-        </div>
-        <div class="fg">
-          <label class="fl">Validade</label>
-          <select class="fi" id="adm-plano">
-            <option value="365">Básico – 1 ano</option>
-            <option value="730">Completo – 2 anos</option>
-            <option value="9999">Empresarial – Vitalício</option>
-            <option value="30">Teste – 30 dias</option>
-          </select>
-        </div>
-        <button class="btn" onclick="admGerarLicenca()">🔑 Gerar licença</button>
-      </div>
-    </div>
-
-    <div class="card" id="adm-resultado" style="display:none">
-      <div class="card-title">✅ Licença gerada</div>
-      <div style="background:var(--cinza1);border-radius:10px;padding:12px;margin-bottom:12px">
-        <div style="font-size:10px;color:var(--texto3);font-weight:700;letter-spacing:.5px;margin-bottom:6px">LINK DO CLIENTE</div>
-        <div style="font-size:12px;color:var(--roxo2);font-weight:700;word-break:break-all;font-family:monospace" id="adm-link"></div>
-      </div>
-      <div style="font-size:13px;color:var(--texto2);margin-bottom:14px" id="adm-info"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <button class="btn btn-ghost" onclick="admCopiar()">📋 Copiar</button>
-        <button class="btn" style="background:linear-gradient(135deg,#25D366,#1a9955);box-shadow:0 4px 14px rgba(37,211,102,.3)" onclick="admEnviarWpp()">💬 WhatsApp</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Licenças geradas</div>
-      <div id="adm-historico"><div class="empty">Nenhuma licença ainda</div></div>
-    </div>
   </div>
 </div>
 
@@ -875,20 +872,15 @@ document.querySelector('.header').addEventListener('click', ()=>{
   tapTimer = setTimeout(()=>tapCount=0, 3000);
   if(tapCount >= 3){
     tapCount = 0;
-    document.getElementById('nav-admin').style.display = 'flex';
-    document.getElementById('scr-admin').style.display = '';
-    const navAdmin = document.getElementById('nav-admin');
-    ir('admin', navAdmin);
-    toast('🔑 Modo admin ativado');
+    abrirAdmin();
   }
 });
 
 function ir(nome, el){
   document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  // mostra a tela correta
   const scr = document.getElementById('scr-'+nome);
-  if(scr){ scr.classList.add('active'); scr.style.display='flex'; }
+  if(scr) scr.classList.add('active');
   if(el) el.classList.add('active');
   if(nome==='resumo')renderResumo();
   if(nome==='compras'){renderCompras();if(!document.getElementById('ins-ed').children.length)addIns()}
@@ -900,7 +892,6 @@ function ir(nome, el){
 
 function abrirAdmin(){
   document.getElementById('nav-admin').style.display = 'flex';
-  document.getElementById('scr-admin').style.display = '';
   ir('admin', document.getElementById('nav-admin'));
   toast('🔑 Modo admin ativado');
 }
