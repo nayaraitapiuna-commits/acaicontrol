@@ -331,6 +331,13 @@ html,body{height:100%;background:var(--fundo);font-family:var(--font);color:var(
         <div>4️⃣ Selecione o arquivo — pronto, todos os dados aparecem!</div>
       </div>
     </div>
+
+    <!-- Botão admin oculto -->
+    <div style="text-align:center;padding:8px 0">
+      <button onclick="abrirAdmin()" style="background:none;border:none;color:var(--cinza3);font-size:11px;cursor:pointer;font-family:var(--font);padding:8px">
+        v5.0 · AçaíControl
+      </button>
+    </div>
   </div>
 
   <div class="nav" style="grid-template-columns:repeat(5,1fr)">
@@ -865,8 +872,8 @@ let tapCount = 0, tapTimer = null;
 document.querySelector('.header').addEventListener('click', ()=>{
   tapCount++;
   clearTimeout(tapTimer);
-  tapTimer = setTimeout(()=>tapCount=0, 2000);
-  if(tapCount >= 5){
+  tapTimer = setTimeout(()=>tapCount=0, 3000);
+  if(tapCount >= 3){
     tapCount = 0;
     document.getElementById('nav-admin').style.display = 'flex';
     document.getElementById('scr-admin').style.display = '';
@@ -889,6 +896,13 @@ function ir(nome, el){
   if(nome==='fixos')renderFixos();
   if(nome==='dados')renderDados();
   if(nome==='admin')renderAdminHistorico();
+}
+
+function abrirAdmin(){
+  document.getElementById('nav-admin').style.display = 'flex';
+  document.getElementById('scr-admin').style.display = '';
+  ir('admin', document.getElementById('nav-admin'));
+  toast('🔑 Modo admin ativado');
 }
 
 function loginAdmin(){
