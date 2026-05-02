@@ -909,11 +909,6 @@ function renderAdminHistorico(){
   }).join('');
 }
 
-// ── SERVICE WORKER ────────────────────────────────────────────────────────────
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
-}
-
 // Detectar offline
 window.addEventListener('offline',()=>document.getElementById('offline-bar').classList.add('show'));
 window.addEventListener('online',()=>document.getElementById('offline-bar').classList.remove('show'));
