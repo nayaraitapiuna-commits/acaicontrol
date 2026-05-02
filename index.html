@@ -436,54 +436,52 @@ async function verificarLicenca(){
   const params = new URLSearchParams(window.location.search);
   const chaveUrl = params.get('key');
   const chaveSalva = localStorage.getItem('acai_key');
-  const chave = chaveUrl || chaveSalva;
+
+  // se veio com ?key= na URL, valida e salva
+  if(chaveUrl){
+    const ok = await validarChave(chaveUrl);
+    if(ok){
+      localStorage.setItem('acai_key', chaveUrl);
+      document.getElementById('tela-bloqueio').style.display = 'none';
+      return;
+    } else {
+      bloquear('🔒','Licença inválida','Esta chave não é válida ou expirou.');
+      return;
+    }
+  }
+
+  // se tem chave salva, valida ela
+  if(chaveSalva){
+    const ok = await validarChave(chaveSalva);
+    if(ok){
+      document.getElementById('tela-bloqueio').style.display = 'none';
+      return;
+    } else {
+      localStorage.removeItem('acai_key');
+      bloquear('⏰','Licença expirada','Sua licença expirou. Renove para continuar usando o AçaíControl.');
+      return;
+    }
+  }
 
   // sem chave nenhuma
-  if(!chave){
-    bloquear('🔒','Acesso restrito','Este app requer uma licença válida. Entre em contato para adquirir o seu.');
-    return;
-  }
+  bloquear('🔒','Acesso restrito','Este app requer uma licença válida. Entre em contato para adquirir o seu.');
+}
 
+async function validarChave(chave){
   try{
-    // a chave tem formato YYYYMMDD-TOKEN (token pode conter hífens)
     const primeiroHifen = chave.indexOf('-');
-    if(primeiroHifen === -1){ bloquear('🔒','Licença inválida','Chave com formato inválido.'); return; }
-
-    const exp   = chave.slice(0, primeiroHifen);   // ex: 20530916
-    const token = chave.slice(primeiroHifen + 1);  // ex: QZG9GFYE4B4Z5-G5
-
-    if(!exp || !token || exp.length !== 8){
-      bloquear('🔒','Licença inválida','Esta chave de acesso não é reconhecida.');
-      return;
-    }
-
-    // verifica data de expiração
+    if(primeiroHifen === -1) return false;
+    const exp = chave.slice(0, primeiroHifen);
+    if(exp.length !== 8) return false;
     const ano=parseInt(exp.slice(0,4)), mes=parseInt(exp.slice(4,6))-1, dia=parseInt(exp.slice(6,8));
     const dataExp = new Date(ano, mes, dia, 23, 59, 59);
-    if(isNaN(dataExp.getTime())){
-      bloquear('🔒','Licença inválida','Chave com formato inválido.');
-      return;
-    }
-    if(new Date() > dataExp){
-      bloquear('⏰','Licença expirada',`Sua licença venceu em ${dataFmtBr(exp)}. Renove para continuar usando o AçaíControl.`);
-      return;
-    }
-
-    // ✅ licença válida — salva no localStorage para abrir sem URL
-    localStorage.setItem('acai_key', chave);
-
-    // aviso de vencimento próximo (30 dias)
-    const diasRestantes = Math.ceil((dataExp - new Date()) / (1000*60*60*24));
-    if(diasRestantes <= 30){
-      setTimeout(()=>{ toast(`⚠️ Licença vence em ${diasRestantes} dias`); }, 3000);
-    }
-
-    // esconde bloqueio e mostra app
-    document.getElementById('tela-bloqueio').style.display = 'none';
-
-  }catch(e){
-    bloquear('🔒','Erro na verificação','Não foi possível validar a licença. Entre em contato pelo WhatsApp.');
-  }
+    if(isNaN(dataExp.getTime())) return false;
+    if(new Date() > dataExp) return false;
+    // aviso próximo vencimento
+    const dias = Math.ceil((dataExp - new Date())/(1000*60*60*24));
+    if(dias <= 30) setTimeout(()=>toast(`⚠️ Licença vence em ${dias} dias`), 3000);
+    return true;
+  }catch{ return false; }
 }
 
 function bloquear(icon, titulo, msg){
