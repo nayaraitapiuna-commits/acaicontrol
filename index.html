@@ -132,19 +132,6 @@ html,body{height:100%;background:var(--fundo);font-family:var(--font);color:var(
 </head>
 <body>
 
-<!-- TELA DE LICENÇA BLOQUEADA -->
-<div id="tela-bloqueio" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#2D0A5C,#4c1d95);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px">
-  <div style="background:#fff;border-radius:24px;padding:36px 28px;max-width:360px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.4)">
-    <div style="font-size:56px;margin-bottom:16px" id="bloq-icon">🔒</div>
-    <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#2D0A5C;margin-bottom:10px" id="bloq-titulo">Licença inválida</div>
-    <div style="font-size:14px;color:#6B7280;line-height:1.6;margin-bottom:24px" id="bloq-msg">Este link não é válido ou expirou.</div>
-    <a href="https://wa.me/5585986558344?text=Ol%C3%A1!%20Preciso%20renovar%20minha%20licen%C3%A7a%20do%20A%C3%A7a%C3%ADControl" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;padding:14px 28px;border-radius:100px;text-decoration:none;box-shadow:0 6px 20px rgba(37,211,102,.4)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      Renovar pelo WhatsApp
-    </a>
-  </div>
-</div>
-
 <div class="offline-bar" id="offline-bar">📵 Sem internet – dados salvos localmente</div>
 
 <div class="app">
@@ -420,80 +407,6 @@ html,body{height:100%;background:var(--fundo);font-family:var(--font);color:var(
 <div class="toast" id="toast"></div>
 
 <script>
-// ── VERIFICAÇÃO DE LICENÇA ────────────────────────────────────────────────────
-const SECRET_APP = "acaicontrol2025@chave";
-
-async function sha256app(msg){
-  const enc = new TextEncoder().encode(msg);
-  const buf = await crypto.subtle.digest("SHA-256", enc);
-  const arr = Array.from(new Uint8Array(buf));
-  return btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-}
-
-function dataFmtBr(s){return `${s.slice(6,8)}/${s.slice(4,6)}/${s.slice(0,4)}`}
-
-async function verificarLicenca(){
-  const params = new URLSearchParams(window.location.search);
-  const chaveUrl = params.get('key');
-  const chaveSalva = localStorage.getItem('acai_key');
-
-  // se veio com ?key= na URL, valida e salva
-  if(chaveUrl){
-    const ok = await validarChave(chaveUrl);
-    if(ok){
-      localStorage.setItem('acai_key', chaveUrl);
-      document.getElementById('tela-bloqueio').style.display = 'none';
-      return;
-    } else {
-      bloquear('🔒','Licença inválida','Esta chave não é válida ou expirou.');
-      return;
-    }
-  }
-
-  // se tem chave salva, valida ela
-  if(chaveSalva){
-    const ok = await validarChave(chaveSalva);
-    if(ok){
-      document.getElementById('tela-bloqueio').style.display = 'none';
-      return;
-    } else {
-      localStorage.removeItem('acai_key');
-      bloquear('⏰','Licença expirada','Sua licença expirou. Renove para continuar usando o AçaíControl.');
-      return;
-    }
-  }
-
-  // sem chave nenhuma
-  bloquear('🔒','Acesso restrito','Este app requer uma licença válida. Entre em contato para adquirir o seu.');
-}
-
-async function validarChave(chave){
-  try{
-    const primeiroHifen = chave.indexOf('-');
-    if(primeiroHifen === -1) return false;
-    const exp = chave.slice(0, primeiroHifen);
-    if(exp.length !== 8) return false;
-    const ano=parseInt(exp.slice(0,4)), mes=parseInt(exp.slice(4,6))-1, dia=parseInt(exp.slice(6,8));
-    const dataExp = new Date(ano, mes, dia, 23, 59, 59);
-    if(isNaN(dataExp.getTime())) return false;
-    if(new Date() > dataExp) return false;
-    // aviso próximo vencimento
-    const dias = Math.ceil((dataExp - new Date())/(1000*60*60*24));
-    if(dias <= 30) setTimeout(()=>toast(`⚠️ Licença vence em ${dias} dias`), 3000);
-    return true;
-  }catch{ return false; }
-}
-
-function bloquear(icon, titulo, msg){
-  document.getElementById('bloq-icon').textContent = icon;
-  document.getElementById('bloq-titulo').textContent = titulo;
-  document.getElementById('bloq-msg').textContent = msg;
-  document.getElementById('tela-bloqueio').style.display = 'flex';
-  document.querySelector('.app').style.display = 'none';
-}
-
-verificarLicenca();
-
 // ── DADOS ─────────────────────────────────────────────────────────────────────
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const MC=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
