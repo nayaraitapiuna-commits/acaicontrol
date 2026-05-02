@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#3b0764">
+<meta name="description" content="AçaíControl – Controle financeiro para açaíterias">
+<link rel="manifest" href="manifest.json">
+<title>AçaíControl</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --roxo:#3b0764;--roxo2:#6d28d9;--roxo4:#ede9fe;
+  --verde2:#059669;--vermelho2:#ef4444;--laranja:#c2410c;
+  --cinza1:#f8f7ff;--cinza2:#f1f0fb;--cinza3:#e0defa;--cinza4:#c4b5fd;
+  --texto:#1e1b4b;--texto2:#4c4880;--texto3:#8b83cc;
+  --card:#ffffff;--fundo:#f5f3ff;--borda:#ddd6fe;
+  --font:'Nunito',sans-serif;--radius:16px;--radius-sm:10px;
+}
+html,body{height:100%;background:var(--fundo);font-family:var(--font);color:var(--texto);overflow:hidden}
+.app{display:flex;flex-direction:column;height:100vh;max-width:430px;margin:0 auto;background:var(--fundo)}
+
+.header{background:linear-gradient(135deg,#3b0764,#4c1d95);padding:env(safe-area-inset-top,14px) 20px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 20px rgba(59,7,100,.35);flex-shrink:0;z-index:10}
+.header-icon{width:36px;height:36px;flex-shrink:0}
+.header-title{font-size:17px;font-weight:800;color:#fff}
+.header-sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:1px}
+.hdr-mes{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;color:#fff;margin-left:auto}
+
+.content{flex:1;overflow-y:auto;padding:16px;display:none;flex-direction:column;gap:14px;padding-bottom:90px}
+.content.active{display:flex}
+
+.nav{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-top:1px solid var(--borda);padding-bottom:env(safe-area-inset-bottom,0);flex-shrink:0;z-index:10}
+.nav-item{display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;cursor:pointer}
+.nav-item.active .nav-icon{background:var(--roxo4);color:var(--roxo2)}
+.nav-item.active .nav-label{color:var(--roxo2);font-weight:700}
+.nav-icon{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--texto3)}
+.nav-label{font-size:10px;font-weight:600;color:var(--texto3);margin-top:2px}
+
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--borda);padding:18px;box-shadow:0 2px 12px rgba(109,40,217,.06)}
+.card-title{font-size:11px;font-weight:700;color:var(--texto3);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric{background:linear-gradient(135deg,var(--cinza1),var(--cinza2));border-radius:14px;padding:14px;border:1px solid var(--cinza3)}
+.metric-label{font-size:11px;color:var(--texto3);font-weight:600;margin-bottom:5px}
+.metric-val{font-size:18px;font-weight:800;line-height:1}
+.metric-val.verde{color:var(--verde2)}.metric-val.vermelho{color:var(--vermelho2)}.metric-val.roxo{color:var(--roxo2)}
+
+.fl{font-size:12px;font-weight:700;color:var(--texto2);margin-bottom:4px;display:block}
+.fi{padding:11px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--borda);background:var(--cinza1);color:var(--texto);font-size:15px;font-family:var(--font);font-weight:600;width:100%;transition:border-color .15s}
+.fi:focus{outline:none;border-color:var(--roxo2);box-shadow:0 0 0 3px rgba(109,40,217,.12)}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 44px;gap:8px;align-items:end}
+
+.btn{width:100%;padding:13px;border-radius:var(--radius-sm);border:none;background:linear-gradient(135deg,var(--roxo2),#7c3aed);color:#fff;font-size:15px;font-weight:800;font-family:var(--font);cursor:pointer;box-shadow:0 4px 14px rgba(109,40,217,.35)}
+.btn:active{opacity:.9}
+.btn-ghost{background:var(--cinza2);border:1.5px solid var(--borda);color:var(--texto2);box-shadow:none}
+.btn-del{width:36px;height:36px;flex-shrink:0;border-radius:var(--radius-sm);border:none;background:#fee2e2;color:var(--vermelho2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font);font-weight:700}
+
+.tprev{background:var(--roxo4);border:1.5px solid var(--cinza4);border-radius:var(--radius-sm);padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+.tprev-label{font-size:13px;color:var(--roxo2);font-weight:600}
+.tprev-val{font-size:20px;font-weight:800;color:var(--roxo)}
+
+.li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--cinza3)}
+.li:last-child{border-bottom:none}
+.li-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.li-info{flex:1;min-width:0}
+.li-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-sub{font-size:11px;color:var(--texto3);margin-top:1px}
+.li-val{font-size:14px;font-weight:800;white-space:nowrap}
+.li-del{width:28px;height:28px;border-radius:8px;background:var(--cinza2);border:none;color:var(--texto3);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--font)}
+
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.pill-q{background:#ede9fe;color:#5b21b6}.pill-p{background:#fef3c7;color:#92400e}
+
+.pr{display:flex;flex-direction:column;gap:5px}
+.pr-head{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--texto2)}
+.pr-bar{height:7px;background:var(--cinza3);border-radius:4px;overflow:hidden}
+.pr-fill{height:100%;border-radius:4px;transition:width .5s}
+
+.fxrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--cinza3)}
+.fxrow:last-child{border-bottom:none}
+.fxicon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.fxlabel{flex:1;font-size:13px;font-weight:600}
+.fxinp{width:110px;text-align:right;padding:8px 10px;font-size:14px;font-weight:700}
+
+.mnav{display:flex;align-items:center;justify-content:space-between}
+.mnav-label{font-size:15px;font-weight:800}
+.mnav-btn{background:var(--card);border:1.5px solid var(--borda);border-radius:var(--radius-sm);padding:6px 14px;font-size:13px;font-weight:700;color:var(--texto2);cursor:pointer;font-family:var(--font)}
+
+.drow{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(167,139,250,.2)}
+.drow:last-child{border-bottom:none}
+
+.empty{text-align:center;padding:24px 0;color:var(--texto3);font-size:13px;font-weight:600}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(10px);background:#3b0764;color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:700;z-index:999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap;font-family:var(--font)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.rrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--cinza3)}
+.rrow:last-child{border-bottom:none}
+.rnum{width:22px;height:22px;border-radius:50%;background:var(--roxo4);color:var(--roxo2);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+.ccard{background:var(--cinza1);border:1px solid var(--cinza3);border-radius:12px;padding:14px;margin-bottom:10px}
+.ccard:last-child{margin-bottom:0}
+.ins-bloco{background:var(--cinza1);border:1.5px solid var(--cinza3);border-radius:12px;padding:12px;margin-bottom:10px}
+.ins-bloco:last-child{margin-bottom:0}
+.ins-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ins-sub{margin-top:8px;background:var(--roxo4);border-radius:8px;padding:7px 10px;display:flex;justify-content:space-between}
+.ins-sub-label{font-size:11px;color:var(--roxo2);font-weight:600}
+.ins-sub-val{font-size:14px;font-weight:800;color:var(--roxo)}
+.ins-det-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--cinza3);font-size:12px}
+.ins-det-row:last-child{border-bottom:none}
+
+.fixos-tot{display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:2px solid var(--borda);margin-top:4px}
+.fxedit{width:28px;height:28px;border-radius:8px;background:var(--cinza2);border:none;color:var(--texto3);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--font)}
+.fxdel{width:28px;height:28px;border-radius:8px;background:#fee2e2;border:none;color:var(--vermelho2);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--font)}
+
+.offline-bar{background:#f59e0b;color:#fff;text-align:center;font-size:12px;font-weight:700;padding:6px;display:none}
+.offline-bar.show{display:block}
+.dado-card{background:var(--cinza1);border:1.5px solid var(--cinza3);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.dado-card-title{font-size:13px;font-weight:700;color:var(--texto);margin-bottom:2px}
+.dado-card-desc{font-size:12px;color:var(--texto3);line-height:1.5}
+.btn-exportar{background:linear-gradient(135deg,#059669,#047857);box-shadow:0 4px 14px rgba(5,150,105,.3)}
+.btn-importar{background:linear-gradient(135deg,#2563eb,#1d4ed8);box-shadow:0 4px 14px rgba(37,99,235,.3)}
+.btn-apagar{background:linear-gradient(135deg,#dc2626,#b91c1c);box-shadow:0 4px 14px rgba(220,38,38,.3)}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat-box{background:var(--card);border:1px solid var(--borda);border-radius:10px;padding:12px;text-align:center}
+.stat-num{font-size:20px;font-weight:800;color:var(--roxo2)}
+.stat-lbl{font-size:10px;color:var(--texto3);margin-top:2px;font-weight:600}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- TELA DE LICENÇA BLOQUEADA -->
+<div id="tela-bloqueio" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#2D0A5C,#4c1d95);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="background:#fff;border-radius:24px;padding:36px 28px;max-width:360px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.4)">
+    <div style="font-size:56px;margin-bottom:16px" id="bloq-icon">🔒</div>
+    <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:#2D0A5C;margin-bottom:10px" id="bloq-titulo">Licença inválida</div>
+    <div style="font-size:14px;color:#6B7280;line-height:1.6;margin-bottom:24px" id="bloq-msg">Este link não é válido ou expirou.</div>
+    <a href="https://wa.me/5585986558344?text=Ol%C3%A1!%20Preciso%20renovar%20minha%20licen%C3%A7a%20do%20A%C3%A7a%C3%ADControl" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;padding:14px 28px;border-radius:100px;text-decoration:none;box-shadow:0 6px 20px rgba(37,211,102,.4)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Renovar pelo WhatsApp
+    </a>
+  </div>
+</div>
+
+<div class="offline-bar" id="offline-bar">📵 Sem internet – dados salvos localmente</div>
+
+<div class="app">
+  <div class="header">
+    <svg class="header-icon" viewBox="0 0 36 36" fill="none">
+      <rect width="36" height="36" rx="10" fill="#2D0A5C"/>
+      <circle cx="18" cy="13" r="5.5" fill="#C026D3"/>
+      <circle cx="11.5" cy="19.5" r="4.5" fill="#7C3AED"/>
+      <circle cx="24.5" cy="19.5" r="4.5" fill="#7C3AED"/>
+      <circle cx="18" cy="25" r="4" fill="#A855F7"/>
+      <text x="14" y="15.5" font-family="Arial" font-size="7" font-weight="900" fill="white">R$</text>
+      <polyline points="9,29 13,25 16.5,27 20.5,22 27,23" stroke="#E879F9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+    <div>
+      <div class="header-title">AçaíControl</div>
+      <div class="header-sub">Controle financeiro</div>
+    </div>
+    <div class="hdr-mes" id="hdr-mes"></div>
+  </div>
+
+  <!-- RESUMO -->
+  <div class="content active" id="scr-resumo">
+    <div class="mnav">
+      <button class="mnav-btn" onclick="mudaMes(-1)">‹ Ant</button>
+      <span class="mnav-label" id="mnav-label"></span>
+      <button class="mnav-btn" onclick="mudaMes(1)">Próx ›</button>
+    </div>
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-label">Receita total</div><div class="metric-val roxo" id="m-rec">R$ 0,00</div></div>
+      <div class="metric"><div class="metric-label">Lucro líquido</div><div class="metric-val verde" id="m-luc">R$ 0,00</div></div>
+      <div class="metric"><div class="metric-label">Total custos</div><div class="metric-val vermelho" id="m-cus">R$ 0,00</div></div>
+      <div class="metric"><div class="metric-label">Margem</div><div class="metric-val" id="m-mar">0%</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Composição dos custos</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="pr"><div class="pr-head"><span>Compras (CMV)</span><span id="p-cmv">0%</span></div><div class="pr-bar"><div class="pr-fill" id="pb-cmv" style="background:#7c3aed;width:0%"></div></div></div>
+        <div class="pr"><div class="pr-head"><span>Custos fixos</span><span id="p-fix">0%</span></div><div class="pr-bar"><div class="pr-fill" id="pb-fix" style="background:#ea580c;width:0%"></div></div></div>
+        <div class="pr"><div class="pr-head"><span>Outros do dia</span><span id="p-out">0%</span></div><div class="pr-bar"><div class="pr-fill" id="pb-out" style="background:#9ca3af;width:0%"></div></div></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">Top insumos do mês</div><div id="r-ins"><div class="empty">Nenhuma compra ainda</div></div></div>
+    <div class="card"><div class="card-title">Últimos lançamentos</div><div id="r-lanc"><div class="empty">Nenhum lançamento ainda</div></div></div>
+    <div class="card" style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-color:var(--cinza4)">
+      <div class="card-title" style="color:#5b21b6">Referências saudáveis</div>
+      <div class="drow"><span style="font-size:13px;color:#5b21b6;font-weight:600">CMV ideal</span><span style="font-size:13px;color:#3b0764;font-weight:800">35–45%</span></div>
+      <div class="drow"><span style="font-size:13px;color:#5b21b6;font-weight:600">Custos fixos</span><span style="font-size:13px;color:#3b0764;font-weight:800">até 30%</span></div>
+      <div class="drow"><span style="font-size:13px;color:#5b21b6;font-weight:600">Margem saudável</span><span style="font-size:13px;color:#059669;font-weight:800">acima de 15%</span></div>
+    </div>
+  </div>
+
+  <!-- RECEITA -->
+  <div class="content" id="scr-receita">
+    <div class="card">
+      <div class="card-title">Lançar receita do dia</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="fg"><label class="fl">Data</label><input class="fi" type="date" id="r-data"></div>
+        <div class="fg2">
+          <div class="fg"><label class="fl">Dinheiro (R$)</label><input class="fi" type="number" id="r-din" placeholder="0,00" min="0" step="0.01" inputmode="decimal"></div>
+          <div class="fg"><label class="fl">Pix (R$)</label><input class="fi" type="number" id="r-pix" placeholder="0,00" min="0" step="0.01" inputmode="decimal"></div>
+        </div>
+        <div class="fg"><label class="fl">Cartão (R$)</label><input class="fi" type="number" id="r-cart" placeholder="0,00" min="0" step="0.01" inputmode="decimal"></div>
+        <div class="tprev"><span class="tprev-label">Total do dia</span><span class="tprev-val" id="r-prev">R$ 0,00</span></div>
+        <div class="fg"><label class="fl">Outros custos do dia (R$)</label><input class="fi" type="number" id="r-out" placeholder="0,00" min="0" step="0.01" inputmode="decimal"></div>
+        <button class="btn" onclick="salvarReceita()">Salvar receita ✓</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">Lançamentos recentes</div><div id="lista-rec"><div class="empty">Nenhum lançamento</div></div></div>
+  </div>
+
+  <!-- COMPRAS -->
+  <div class="content" id="scr-compras">
+    <div class="card">
+      <div class="card-title">Registrar compra</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="fg2">
+          <div class="fg"><label class="fl">Data</label><input class="fi" type="date" id="c-data"></div>
+          <div class="fg"><label class="fl">Tipo</label>
+            <select class="fi" id="c-tipo"><option value="q">🗓 Quinzenal</option><option value="p">📍 Pontual</option></select>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span class="fl" style="margin:0">Insumos</span>
+            <button class="btn btn-ghost" style="width:auto;padding:6px 14px;font-size:12px" onclick="addIns()">+ Insumo</button>
+          </div>
+          <div id="ins-ed"></div>
+        </div>
+        <div class="tprev"><span class="tprev-label">Total da compra</span><span class="tprev-val" id="c-prev">R$ 0,00</span></div>
+        <button class="btn" onclick="salvarCompra()">Salvar compra ✓</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Compras do mês</div>
+      <div style="display:flex;gap:16px;margin-bottom:12px">
+        <span style="font-size:12px;color:var(--texto3);font-weight:600">Quinzenal: <strong style="color:var(--roxo2)" id="tot-q">R$ 0,00</strong></span>
+        <span style="font-size:12px;color:var(--texto3);font-weight:600">Pontual: <strong style="color:var(--laranja)" id="tot-p">R$ 0,00</strong></span>
+      </div>
+      <div id="lista-comp"><div class="empty">Nenhuma compra registrada</div></div>
+    </div>
+  </div>
+
+  <!-- FIXOS -->
+  <div class="content" id="scr-fixos">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="card-title" style="margin-bottom:0">Custos fixos mensais</div>
+        <button class="btn btn-ghost" style="width:auto;padding:6px 14px;font-size:12px" onclick="novoFixo()">+ Novo</button>
+      </div>
+      <p style="font-size:12px;color:var(--texto3);margin-bottom:14px;font-weight:600">Toque no ✏️ para editar nome ou ícone. Toque no ✕ para remover.</p>
+      <div id="fx-lista"></div>
+      <div class="fixos-tot">
+        <span style="font-size:15px;font-weight:800">Total fixos</span>
+        <span style="font-size:20px;font-weight:800;color:var(--roxo)" id="fx-total">R$ 0,00</span>
+      </div>
+      <button class="btn" style="margin-top:14px" onclick="salvarFixos()">Salvar custos fixos ✓</button>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR FIXO -->
+  <div id="modal-fixo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center">
+    <div style="background:var(--card);border-radius:24px 24px 0 0;padding:24px;width:100%;max-width:430px;box-shadow:0 -8px 40px rgba(0,0,0,.2)">
+      <div style="font-size:14px;font-weight:800;color:var(--roxo);margin-bottom:18px" id="modal-titulo">Editar custo fixo</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="fg">
+          <label class="fl">Ícone (emoji)</label>
+          <input class="fi" type="text" id="mfx-icon" placeholder="💧" maxlength="4" style="font-size:24px;text-align:center;padding:8px">
+        </div>
+        <div class="fg">
+          <label class="fl">Nome do custo</label>
+          <input class="fi" type="text" id="mfx-nome" placeholder="Ex: Gás de cozinha">
+        </div>
+        <div class="fg">
+          <label class="fl">Valor mensal (R$)</label>
+          <input class="fi" type="number" id="mfx-valor" placeholder="0,00" min="0" step="0.01" inputmode="decimal">
+        </div>
+        <input type="hidden" id="mfx-key">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+          <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+          <button class="btn" onclick="salvarFixoModal()">Salvar ✓</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DADOS -->
+  <div class="content" id="scr-dados">
+    <div class="card">
+      <div class="card-title">Seus dados</div>
+      <div class="stat-grid" id="stats-dados"></div>
+    </div>
+
+    <div class="dado-card">
+      <div>
+        <div class="dado-card-title">📤 Exportar dados</div>
+        <div class="dado-card-desc">Salva todos os seus lançamentos em um arquivo. Use para fazer backup ou transferir para outro celular/app.</div>
+      </div>
+      <button class="btn btn-exportar" onclick="exportarDados()">Exportar backup (.json)</button>
+    </div>
+
+    <div class="dado-card">
+      <div>
+        <div class="dado-card-title">📥 Importar dados</div>
+        <div class="dado-card-desc">Selecione um arquivo de backup exportado anteriormente para restaurar seus lançamentos.</div>
+      </div>
+      <button class="btn btn-importar" onclick="document.getElementById('file-import').click()">Importar backup (.json)</button>
+      <input type="file" id="file-import" accept=".json" style="display:none" onchange="importarDados(this)">
+    </div>
+
+    <div class="dado-card">
+      <div>
+        <div class="dado-card-title">🗑️ Apagar todos os dados</div>
+        <div class="dado-card-desc">Remove permanentemente todos os lançamentos, compras e custos fixos. Faça um backup antes!</div>
+      </div>
+      <button class="btn btn-apagar" onclick="apagarTudo()">Apagar tudo</button>
+    </div>
+
+    <div class="card" style="background:var(--cinza1);border-color:var(--cinza3)">
+      <div class="card-title">Como transferir para novo celular</div>
+      <div style="font-size:13px;color:var(--texto2);line-height:1.7;display:flex;flex-direction:column;gap:8px">
+        <div>1️⃣ No celular antigo, toque em <strong>Exportar backup</strong></div>
+        <div>2️⃣ O arquivo será baixado — compartilhe pelo WhatsApp ou salve nos arquivos</div>
+        <div>3️⃣ No celular novo, abra o app e toque em <strong>Importar backup</strong></div>
+        <div>4️⃣ Selecione o arquivo — pronto, todos os dados aparecem!</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav" style="grid-template-columns:repeat(5,1fr)">
+    <div class="nav-item active" onclick="ir('resumo',this)"><div class="nav-icon">📊</div><div class="nav-label">Resumo</div></div>
+    <div class="nav-item" onclick="ir('receita',this)"><div class="nav-icon">💵</div><div class="nav-label">Receita</div></div>
+    <div class="nav-item" onclick="ir('compras',this)"><div class="nav-icon">🛒</div><div class="nav-label">Compras</div></div>
+    <div class="nav-item" onclick="ir('fixos',this)"><div class="nav-icon">📌</div><div class="nav-label">Fixos</div></div>
+    <div class="nav-item" onclick="ir('dados',this)"><div class="nav-icon">💾</div><div class="nav-label">Dados</div></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── VERIFICAÇÃO DE LICENÇA ────────────────────────────────────────────────────
+const SECRET_APP = "acaicontrol2025@chave";
+
+async function sha256app(msg){
+  const enc = new TextEncoder().encode(msg);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  const arr = Array.from(new Uint8Array(buf));
+  return btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+function dataFmtBr(s){return `${s.slice(6,8)}/${s.slice(4,6)}/${s.slice(0,4)}`}
+
+async function verificarLicenca(){
+  const params = new URLSearchParams(window.location.search);
+  const chave = params.get('key') || localStorage.getItem('acai_key');
+
+  // sem chave nenhuma na url E sem chave salva
+  if(!chave){
+    bloquear('🔒','Acesso restrito','Este app requer uma licença válida. Entre em contato para adquirir o seu.');
+    return;
+  }
+
+  try{
+    const partes = chave.split('-');
+    const exp = partes[0];
+    const token = partes[1];
+    if(!exp || !token || exp.length !== 8){ bloquear('🔒','Licença inválida','Esta chave de acesso não é reconhecida.'); return; }
+
+    // verifica data
+    const ano=parseInt(exp.slice(0,4)), mes=parseInt(exp.slice(4,6))-1, dia=parseInt(exp.slice(6,8));
+    const dataExp = new Date(ano,mes,dia,23,59,59);
+    if(isNaN(dataExp.getTime())){ bloquear('🔒','Licença inválida','Chave com formato inválido.'); return; }
+    if(new Date() > dataExp){
+      bloquear('⏰','Licença expirada',`Sua licença venceu em ${dataFmtBr(exp)}. Renove para continuar usando o AçaíControl.`);
+      return;
+    }
+
+    // salva chave no localStorage para não precisar da URL sempre
+    localStorage.setItem('acai_key', chave);
+
+    // aviso de vencimento próximo (30 dias)
+    const diasRestantes = Math.ceil((dataExp - new Date()) / (1000*60*60*24));
+    if(diasRestantes <= 30){
+      setTimeout(()=>{
+        toast(`⚠️ Licença vence em ${diasRestantes} dias`);
+      }, 3000);
+    }
+
+    // tudo ok — esconde bloqueio e mostra app
+    document.getElementById('tela-bloqueio').style.display = 'none';
+  }catch(e){
+    bloquear('🔒','Erro na verificação','Não foi possível validar a licença. Entre em contato pelo WhatsApp.');
+  }
+}
+
+function bloquear(icon, titulo, msg){
+  document.getElementById('bloq-icon').textContent = icon;
+  document.getElementById('bloq-titulo').textContent = titulo;
+  document.getElementById('bloq-msg').textContent = msg;
+  document.getElementById('tela-bloqueio').style.display = 'flex';
+  document.querySelector('.app').style.display = 'none';
+}
+
+verificarLicenca();
+
+// ── DADOS ─────────────────────────────────────────────────────────────────────
+const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MC=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const FIXOS_DEF=[
+  {k:'agua',l:'Água',i:'💧'},{k:'luz',l:'Luz',i:'⚡'},{k:'solar',l:'Placas solares',i:'☀️'},
+  {k:'tel',l:'Telefone',i:'📱'},{k:'net',l:'Internet',i:'🌐'},{k:'sis',l:'Sistema',i:'💻'},
+  {k:'sal',l:'Salários',i:'👥'},{k:'comb',l:'Combustível',i:'⛽'},{k:'carro',l:'Prestação do carro',i:'🚗'},
+];
+let now=new Date(),vy=now.getFullYear(),vm=now.getMonth(),ic=0;
+
+const lS=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch{return null}};
+const sS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){console.warn('Storage full',e)}};
+
+function loadAll(){
+  return {
+    receitas: lS('acai_rec')||[],
+    compras:  lS('acai_comp')||[],
+    fixos:    lS('acai_fix')||{}
+  };
+}
+function saveReceitas(arr){sS('acai_rec',arr)}
+function saveCompras(arr){sS('acai_comp',arr)}
+function saveFixos(obj){sS('acai_fix',obj)}
+
+const fmt=v=>'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const clamp=v=>Math.min(Math.max(v,0),100);
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+function hj(id){const d=new Date();document.getElementById(id).value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function atuHdr(){document.getElementById('hdr-mes').textContent=MC[vm]+'/'+String(vy).slice(2);document.getElementById('mnav-label').textContent=MESES[vm]+' '+vy}
+
+function getRec(){const{receitas}=loadAll();return receitas.filter(r=>{const[y,m]=r.data.split('-').map(Number);return y===vy&&m-1===vm})}
+function getComp(){const{compras}=loadAll();return compras.filter(c=>{const[y,m]=c.data.split('-').map(Number);return y===vy&&m-1===vm})}
+function getFixos(){return loadAll().fixos}
+
+function ir(nome,el){
+  document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('scr-'+nome).classList.add('active');
+  el.classList.add('active');
+  if(nome==='resumo')renderResumo();
+  if(nome==='compras'){renderCompras();if(!document.getElementById('ins-ed').children.length)addIns()}
+  if(nome==='receita')renderReceitas();
+  if(nome==='fixos')renderFixos();
+  if(nome==='dados')renderDados();
+}
+function mudaMes(d){vm+=d;if(vm>11){vm=0;vy++}if(vm<0){vm=11;vy--}atuHdr();renderResumo()}
+
+function calcPrev(){
+  const v=(parseFloat(document.getElementById('r-din').value)||0)+(parseFloat(document.getElementById('r-pix').value)||0)+(parseFloat(document.getElementById('r-cart').value)||0);
+  document.getElementById('r-prev').textContent=fmt(v);
+}
+function salvarReceita(){
+  const data=document.getElementById('r-data').value;
+  const din=parseFloat(document.getElementById('r-din').value)||0;
+  const pix=parseFloat(document.getElementById('r-pix').value)||0;
+  const cart=parseFloat(document.getElementById('r-cart').value)||0;
+  const out=parseFloat(document.getElementById('r-out').value)||0;
+  if(!data){toast('⚠️ Informe a data');return}
+  if(din+pix+cart===0){toast('⚠️ Informe ao menos um valor');return}
+  const{receitas}=loadAll();
+  receitas.push({data,din,pix,cart,out,total:din+pix+cart,id:Date.now()});
+  saveReceitas(receitas);
+  ['r-din','r-pix','r-cart','r-out'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('r-prev').textContent='R$ 0,00';
+  toast('✓ Receita salva!');renderReceitas();renderResumo();
+}
+function renderReceitas(){
+  const arr=getRec(),el=document.getElementById('lista-rec');
+  if(!arr.length){el.innerHTML='<div class="empty">Nenhum lançamento</div>';return}
+  el.innerHTML=[...arr].reverse().slice(0,10).map(r=>`
+    <div class="li">
+      <div class="li-dot" style="background:#7c3aed"></div>
+      <div class="li-info"><div class="li-name">${r.data.split('-').reverse().join('/')}</div><div class="li-sub">Din:${fmt(r.din)} · Pix:${fmt(r.pix)} · Cart:${fmt(r.cart)}</div></div>
+      <div class="li-val" style="color:#5b21b6">${fmt(r.total)}</div>
+      <button class="li-del" onclick="delRec(${r.id})">✕</button>
+    </div>`).join('');
+}
+function delRec(id){const{receitas}=loadAll();saveReceitas(receitas.filter(r=>r.id!==id));renderReceitas();renderResumo();toast('Removido')}
+
+function addIns(){
+  ic++;const id=ic;
+  const b=document.createElement('div');b.className='ins-bloco';b.id='ins-b-'+id;
+  b.innerHTML=`
+    <div class="ins-top">
+      <input class="fi" type="text" id="ins-n-${id}" placeholder="Nome do insumo (ex: Polpa açaí)" style="flex:1;font-size:13px;padding:9px 12px">
+      <button class="btn-del" onclick="remIns(${id})">✕</button>
+    </div>
+    <div class="fg3">
+      <div class="fg"><label class="fl" style="font-size:10px">Qtd</label><input class="fi" type="number" id="ins-q-${id}" placeholder="1" min="0" step="0.001" inputmode="decimal" style="font-size:13px;padding:9px 10px" oninput="calcIns(${id})"></div>
+      <div class="fg"><label class="fl" style="font-size:10px">Vlr unit (R$)</label><input class="fi" type="number" id="ins-u-${id}" placeholder="0,00" min="0" step="0.01" inputmode="decimal" style="font-size:13px;padding:9px 10px;text-align:right" oninput="calcIns(${id})"></div>
+      <div class="fg"><label class="fl" style="font-size:10px">Un</label><select class="fi" id="ins-un-${id}" style="font-size:12px;padding:9px 6px"><option>kg</option><option>un</option><option>cx</option><option>pct</option><option>L</option><option>g</option><option>saco</option></select></div>
+    </div>
+    <div class="ins-sub"><span class="ins-sub-label">Subtotal</span><span class="ins-sub-val" id="ins-st-${id}">R$ 0,00</span></div>`;
+  document.getElementById('ins-ed').appendChild(b);
+}
+function remIns(id){const el=document.getElementById('ins-b-'+id);if(el)el.remove();calcCTotal();if(!document.getElementById('ins-ed').children.length)addIns()}
+function calcIns(id){
+  const q=parseFloat(document.getElementById('ins-q-'+id).value)||0;
+  const u=parseFloat(document.getElementById('ins-u-'+id).value)||0;
+  document.getElementById('ins-st-'+id).textContent=fmt(q*u);calcCTotal();
+}
+function calcCTotal(){
+  let t=0;document.querySelectorAll('[id^="ins-st-"]').forEach(el=>{t+=parseFloat(el.textContent.replace('R$ ','').replace(/\./g,'').replace(',','.'))||0});
+  document.getElementById('c-prev').textContent=fmt(t);
+}
+function salvarCompra(){
+  const data=document.getElementById('c-data').value;
+  const tipo=document.getElementById('c-tipo').value;
+  if(!data){toast('⚠️ Informe a data');return}
+  const insumos=[];
+  document.querySelectorAll('[id^="ins-n-"]').forEach(inp=>{
+    const num=inp.id.replace('ins-n-','');
+    const nome=inp.value.trim();
+    const qtd=parseFloat(document.getElementById('ins-q-'+num).value)||0;
+    const unit=parseFloat(document.getElementById('ins-u-'+num).value)||0;
+    const un=document.getElementById('ins-un-'+num).value;
+    if(nome&&qtd*unit>0)insumos.push({nome,qtd,unit,un,total:qtd*unit});
+  });
+  if(!insumos.length){toast('⚠️ Adicione ao menos um insumo');return}
+  const total=insumos.reduce((a,b)=>a+b.total,0);
+  const{compras}=loadAll();
+  compras.push({data,tipo,insumos,total,id:Date.now()});
+  saveCompras(compras);
+  document.getElementById('ins-ed').innerHTML='';ic=0;addIns();
+  document.getElementById('c-prev').textContent='R$ 0,00';
+  toast('✓ Compra salva!');renderCompras();renderResumo();
+}
+function renderCompras(){
+  const arr=getComp();let tq=0,tp=0;arr.forEach(c=>c.tipo==='q'?tq+=c.total:tp+=c.total);
+  document.getElementById('tot-q').textContent=fmt(tq);document.getElementById('tot-p').textContent=fmt(tp);
+  const el=document.getElementById('lista-comp');
+  if(!arr.length){el.innerHTML='<div class="empty">Nenhuma compra registrada</div>';return}
+  el.innerHTML=[...arr].reverse().map(c=>{
+    const d=c.data.split('-').reverse().join('/');
+    const pill=c.tipo==='q'?'<span class="pill pill-q">Quinzenal</span>':'<span class="pill pill-p">Pontual</span>';
+    const ins=c.insumos.map(i=>`<div class="ins-det-row"><span style="color:var(--texto2)">• ${i.nome}</span><span style="font-size:10px;color:var(--texto3)">${i.qtd} ${i.un} × ${fmt(i.unit)}</span><span style="font-weight:800;color:#6d28d9">${fmt(i.total)}</span></div>`).join('');
+    return `<div class="ccard">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div><div style="font-size:12px;color:var(--texto3);margin-bottom:3px">${d} · ${pill}</div><div style="font-size:17px;font-weight:800;color:var(--roxo)">${fmt(c.total)}</div></div>
+        <button class="li-del" onclick="delComp(${c.id})">✕</button>
+      </div>
+      <div style="border-top:1px solid var(--cinza3);padding-top:8px">${ins}</div>
+    </div>`;
+  }).join('');
+}
+function delComp(id){const{compras}=loadAll();saveCompras(compras.filter(c=>c.id!==id));renderCompras();renderResumo();toast('Removido')}
+
+// ── FIXOS EDITÁVEIS ───────────────────────────────────────────────────────────
+// Estrutura salva: { itens: [{k, l, i, v}] }
+// k = key única, l = label, i = ícone, v = valor
+
+const FIXOS_PADRAO = [
+  {k:'agua',l:'Água',i:'💧',v:0},
+  {k:'luz',l:'Luz',i:'⚡',v:0},
+  {k:'solar',l:'Placas solares',i:'☀️',v:0},
+  {k:'tel',l:'Telefone',i:'📱',v:0},
+  {k:'net',l:'Internet',i:'🌐',v:0},
+  {k:'sis',l:'Sistema',i:'💻',v:0},
+  {k:'sal',l:'Salários',i:'👥',v:0},
+  {k:'comb',l:'Combustível',i:'⛽',v:0},
+  {k:'carro',l:'Prestação do carro',i:'🚗',v:0},
+];
+
+function loadFixosItens(){
+  try{
+    const raw = localStorage.getItem('acai_fixos_v2');
+    if(raw) return JSON.parse(raw);
+    // migra do formato antigo se existir
+    const antigo = lS('acai_fix');
+    if(antigo){
+      const migrado = FIXOS_PADRAO.map(f=>({...f, v: antigo[f.k]||0}));
+      saveFixosItens(migrado);
+      return migrado;
+    }
+    return FIXOS_PADRAO.map(f=>({...f}));
+  }catch{return FIXOS_PADRAO.map(f=>({...f}))}
+}
+function saveFixosItens(itens){ localStorage.setItem('acai_fixos_v2', JSON.stringify(itens)) }
+
+function renderFixos(){
+  const itens = loadFixosItens();
+  const el = document.getElementById('fx-lista');
+  if(!itens.length){
+    el.innerHTML='<div class="empty">Nenhum custo fixo. Toque em "+ Novo" para adicionar.</div>';
+    document.getElementById('fx-total').textContent = fmt(0);
+    return;
+  }
+  el.innerHTML = itens.map((f,idx) => `
+    <div class="fxrow" id="fxrow-${idx}">
+      <span class="fxicon">${f.i||'📌'}</span>
+      <span class="fxlabel">${f.l}</span>
+      <input class="fi fxinp" type="number" data-idx="${idx}" min="0" step="0.01"
+        value="${f.v||''}" placeholder="0,00" inputmode="decimal" oninput="updFxTot()">
+      <button class="fxedit" onclick="editarFixo(${idx})" title="Editar">✏️</button>
+      <button class="fxdel" onclick="removerFixo(${idx})" title="Remover">✕</button>
+    </div>`).join('');
+  updFxTot();
+}
+
+function updFxTot(){
+  let t=0;
+  document.querySelectorAll('[data-idx]').forEach(i=>t+=parseFloat(i.value)||0);
+  document.getElementById('fx-total').textContent=fmt(t);
+}
+
+function salvarFixos(){
+  const itens = loadFixosItens();
+  document.querySelectorAll('[data-idx]').forEach(inp=>{
+    const idx = parseInt(inp.dataset.idx);
+    if(itens[idx]) itens[idx].v = parseFloat(inp.value)||0;
+  });
+  saveFixosItens(itens);
+  toast('✓ Custos fixos salvos!');
+  renderResumo();
+}
+
+function totFix(){
+  return loadFixosItens().reduce((a,b)=>a+(b.v||0),0);
+}
+
+// modal
+let modoModal = 'novo'; // 'novo' | 'editar'
+let idxEditando = -1;
+
+function novoFixo(){
+  modoModal = 'novo'; idxEditando = -1;
+  document.getElementById('modal-titulo').textContent = 'Novo custo fixo';
+  document.getElementById('mfx-icon').value = '';
+  document.getElementById('mfx-nome').value = '';
+  document.getElementById('mfx-valor').value = '';
+  document.getElementById('modal-fixo').style.display = 'flex';
+}
+
+function editarFixo(idx){
+  const itens = loadFixosItens();
+  const f = itens[idx];
+  modoModal = 'editar'; idxEditando = idx;
+  document.getElementById('modal-titulo').textContent = 'Editar custo fixo';
+  document.getElementById('mfx-icon').value = f.i||'📌';
+  document.getElementById('mfx-nome').value = f.l;
+  document.getElementById('mfx-valor').value = f.v||'';
+  document.getElementById('modal-fixo').style.display = 'flex';
+}
+
+function fecharModal(){
+  document.getElementById('modal-fixo').style.display = 'none';
+}
+
+function salvarFixoModal(){
+  const icon = document.getElementById('mfx-icon').value.trim() || '📌';
+  const nome = document.getElementById('mfx-nome').value.trim();
+  const valor = parseFloat(document.getElementById('mfx-valor').value)||0;
+  if(!nome){ toast('⚠️ Informe o nome do custo'); return; }
+
+  // salva valores atuais dos inputs antes de modificar
+  salvarValoresAtuais();
+
+  const itens = loadFixosItens();
+  if(modoModal === 'novo'){
+    const k = 'custom_' + Date.now();
+    itens.push({k, l:nome, i:icon, v:valor});
+  } else {
+    itens[idxEditando] = {...itens[idxEditando], l:nome, i:icon, v:valor};
+  }
+  saveFixosItens(itens);
+  fecharModal();
+  renderFixos();
+  toast(modoModal==='novo' ? '✓ Custo adicionado!' : '✓ Custo atualizado!');
+}
+
+function removerFixo(idx){
+  if(!confirm('Remover este custo fixo?')) return;
+  salvarValoresAtuais();
+  const itens = loadFixosItens();
+  itens.splice(idx, 1);
+  saveFixosItens(itens);
+  renderFixos();
+  toast('Removido');
+  renderResumo();
+}
+
+function salvarValoresAtuais(){
+  // persiste os valores digitados nos inputs antes de qualquer re-render
+  const itens = loadFixosItens();
+  document.querySelectorAll('[data-idx]').forEach(inp=>{
+    const idx = parseInt(inp.dataset.idx);
+    if(itens[idx]) itens[idx].v = parseFloat(inp.value)||0;
+  });
+  saveFixosItens(itens);
+}
+
+// fechar modal clicando fora
+document.addEventListener('click', e=>{
+  const modal = document.getElementById('modal-fixo');
+  if(e.target === modal) fecharModal();
+});
+
+function renderResumo(){
+  const recs=getRec(),comps=getComp();
+  let tRec=0,cmv=0,outros=0;
+  recs.forEach(r=>{tRec+=r.total;outros+=r.out||0});comps.forEach(c=>cmv+=c.total);
+  const fix=totFix(),tCus=cmv+fix+outros,luc=tRec-tCus;
+  const mar=tRec>0?Math.round(luc/tRec*100):0;
+  document.getElementById('m-rec').textContent=fmt(tRec);
+  document.getElementById('m-luc').textContent=fmt(luc);
+  document.getElementById('m-luc').className='metric-val '+(luc>=0?'verde':'vermelho');
+  document.getElementById('m-cus').textContent=fmt(tCus);
+  document.getElementById('m-mar').textContent=mar+'%';
+  document.getElementById('m-mar').className='metric-val '+(mar>=15?'verde':mar>=0?'roxo':'vermelho');
+  const bar=(p,b,v,t)=>{const pct=t>0?clamp(Math.round(v/t*100)):0;document.getElementById(p).textContent=pct+'%';document.getElementById(b).style.width=pct+'%'};
+  bar('p-cmv','pb-cmv',cmv,tRec);bar('p-fix','pb-fix',fix,tRec);bar('p-out','pb-out',outros,tRec);
+  const mapa={};comps.forEach(c=>c.insumos.forEach(i=>{const k=i.nome.toLowerCase().trim();mapa[k]=(mapa[k]||0)+i.total}));
+  const top=Object.entries(mapa).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('r-ins').innerHTML=top.length?top.map(([n,v],i)=>`
+    <div class="rrow"><div class="rnum">${i+1}</div><div style="flex:1;font-size:13px;font-weight:700">${n.charAt(0).toUpperCase()+n.slice(1)}</div><div style="font-size:13px;font-weight:800;color:var(--roxo2)">${fmt(v)}</div></div>`).join(''):'<div class="empty">Nenhuma compra ainda</div>';
+  const items=[...recs.map(r=>({data:r.data,n:'Receita do dia',v:r.total,cor:'#5b21b6',s:'+'})),...comps.map(c=>({data:c.data,n:c.insumos.map(i=>i.nome).join(', '),v:c.total,cor:'#b91c1c',s:'-'}))].sort((a,b)=>b.data.localeCompare(a.data)).slice(0,8);
+  document.getElementById('r-lanc').innerHTML=items.length?items.map(it=>`
+    <div class="li"><div class="li-dot" style="background:${it.cor}"></div><div class="li-info"><div class="li-name">${it.n}</div><div class="li-sub">${it.data.split('-').reverse().join('/')}</div></div><div class="li-val" style="color:${it.cor}">${it.s} ${fmt(it.v)}</div></div>`).join(''):'<div class="empty">Nenhum lançamento este mês</div>';
+}
+
+// ── EXPORTAR / IMPORTAR / APAGAR ─────────────────────────────────────────────
+function exportarDados(){
+  const dados={
+    versao:1,
+    exportadoEm:new Date().toISOString(),
+    receitas:lS('acai_rec')||[],
+    compras:lS('acai_comp')||[],
+    fixos:lS('acai_fix')||{}
+  };
+  const blob=new Blob([JSON.stringify(dados,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const data=new Date();
+  a.href=url;
+  a.download=`acaicontrol-backup-${data.getFullYear()}${String(data.getMonth()+1).padStart(2,'0')}${String(data.getDate()).padStart(2,'0')}.json`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✓ Backup exportado!');
+}
+
+function importarDados(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const dados=JSON.parse(e.target.result);
+      if(!dados.versao||!dados.receitas||!dados.compras){toast('⚠️ Arquivo inválido');return}
+      const recAtual=lS('acai_rec')||[];
+      const compAtual=lS('acai_comp')||[];
+      // mescla sem duplicar por id
+      const idsRec=new Set(recAtual.map(r=>r.id));
+      const idsComp=new Set(compAtual.map(c=>c.id));
+      const novasRec=dados.receitas.filter(r=>!idsRec.has(r.id));
+      const novasComp=dados.compras.filter(c=>!idsComp.has(c.id));
+      saveReceitas([...recAtual,...novasRec]);
+      saveCompras([...compAtual,...novasComp]);
+      if(dados.fixos&&Object.keys(dados.fixos).length){saveFixos(dados.fixos)}
+      toast(`✓ Importado! +${novasRec.length} receitas, +${novasComp.length} compras`);
+      renderDados();renderResumo();
+    }catch(err){toast('⚠️ Erro ao ler arquivo')}
+  };
+  reader.readAsText(file);
+  input.value='';
+}
+
+function apagarTudo(){
+  if(!confirm('Tem certeza? Isso apaga TODOS os dados permanentemente.\n\nFaça um backup primeiro!')){return}
+  localStorage.removeItem('acai_rec');
+  localStorage.removeItem('acai_comp');
+  localStorage.removeItem('acai_fix');
+  toast('Dados apagados');renderDados();renderResumo();
+}
+
+function renderDados(){
+  const rec=lS('acai_rec')||[];
+  const comp=lS('acai_comp')||[];
+  const fix=lS('acai_fix')||{};
+  const meses=new Set([...rec.map(r=>r.data.slice(0,7)),...comp.map(c=>c.data.slice(0,7))]).size;
+  document.getElementById('stats-dados').innerHTML=`
+    <div class="stat-box"><div class="stat-num">${rec.length}</div><div class="stat-lbl">Receitas</div></div>
+    <div class="stat-box"><div class="stat-num">${comp.length}</div><div class="stat-lbl">Compras</div></div>
+    <div class="stat-box"><div class="stat-num">${meses}</div><div class="stat-lbl">Meses</div></div>`;
+}
+
+// ── SERVICE WORKER ────────────────────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+// Detectar offline
+window.addEventListener('offline',()=>document.getElementById('offline-bar').classList.add('show'));
+window.addEventListener('online',()=>document.getElementById('offline-bar').classList.remove('show'));
+
+['r-din','r-pix','r-cart'].forEach(id=>document.getElementById(id).addEventListener('input',calcPrev));
+hj('r-data');hj('c-data');
+atuHdr();renderResumo();renderFixos();addIns();
+</script>
+</body>
+</html>
